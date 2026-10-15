@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude File Review"
+  short_description: "Send named files to Claude Code for a review-only answer"
+  default_prompt: "Use $claude-review-files to review the specified files with Claude."

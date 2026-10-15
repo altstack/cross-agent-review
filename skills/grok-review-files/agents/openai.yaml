@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grok File Review"
+  short_description: "Send named files to Grok for a review-only answer"
+  default_prompt: "Use $grok-review-files to review the specified files with Grok."
