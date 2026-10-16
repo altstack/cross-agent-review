@@ -1,6 +1,6 @@
 {
   "name": "review-with-grok",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ask xAI Grok for a one-shot, read-only review of files you name. Install it in Claude Code or Codex. Windows, PowerShell 7, and a signed-in xAI Grok CLI are required.",
   "skills": "./skills/"
 }

@@ -1,6 +1,6 @@
 {
   "name": "review-with-codex",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ask OpenAI Codex for a one-shot, read-only review of files you name. Install it in Claude Code or Grok. Windows, PowerShell 7, and a signed-in OpenAI Codex CLI are required.",
   "author": {
     "name": "altstack",

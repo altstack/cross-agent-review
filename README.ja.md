@@ -44,7 +44,7 @@ Claude CodeからCodexへGitの変更だけをレビューさせたいなら、O
 | Codex | `claude-review-files`、`grok-review-files` | `review-with-claude`、`review-with-grok` |
 | Grok Build | `claude-review-files`、`codex-review-files` | `review-with-claude`、`review-with-codex` |
 
-### 方法A：install.ps1でスキルをコピーする（作者が使っている方法）
+### 方法A：スキルのフォルダーをコピーする（作者はinstall.ps1を使用）
 
 ```powershell
 git clone https://github.com/altstack/cross-agent-review.git
@@ -61,6 +61,16 @@ pwsh -File install.ps1          # 事前に確認するなら: pwsh -File instal
 | Grok Build | `~/.grok/skills` |
 
 スキルのフォルダーは、これらのエージェントのスキルを読むアプリならどこでも使えます。既存のフォルダーは`-Force`を付けない限り残します。更新するときは、リポジトリを取り直して`pwsh -File install.ps1 -Force`を実行します。削除は`pwsh -File install.ps1 -Uninstall`です。インストール後は新しい会話を始めてください。
+
+[skills CLI](https://github.com/vercel-labs/skills)（Node.js 22.20以降が必要）でも、同じスキルのフォルダーをコピーできます。会話に使うエージェントの行を実行します。
+
+```powershell
+npx skills add altstack/cross-agent-review -g -a claude-code -s codex-review-files -s grok-review-files   # Claude Code
+npx skills add altstack/cross-agent-review -g -a codex -s claude-review-files -s grok-review-files         # Codex
+npx skills add altstack/cross-agent-review -g -a grok -s claude-review-files -s codex-review-files         # Grok Build
+```
+
+エージェントは1行に1つだけ指定してください。複数をまとめて指定すると、各エージェントに自分自身を呼ぶスキルまで入ります。更新は`npx skills update -g`です。skills CLIは、環境変数`DISABLE_TELEMETRY`を設定しない限り、匿名の利用データをskills.shへ送ります。
 
 ### 方法B：プラグインで入れる（コマンドで導入・更新したい人向け）
 
@@ -139,9 +149,15 @@ pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-co
 
 終了コード：`0`成功、`2`レビュー役の起動前に停止、`3`本文が空（Codex・Grok）またはエラー結果（Claude）、`124`無出力による停止、それ以外はレビュー役自身の終了コードです。
 
+## プライバシー
+
+- runnerは利用状況の送信（テレメトリー）をせず、独自のサーバーも持ちません。作者へは何も送られません。
+- **指定したファイルは、レビュー役の提供元（Anthropic、OpenAI、xAI）へ送られます。** 指定した参考ファイル・フォルダー・URLも同様で、あなたのアカウントでサインインした各社のCLIを通じて送られます。その提供元の規約とプライバシーポリシーが適用されます。
+- `-SaveOutput`を指定しない限り、何も保存しません。Grok用runnerは依頼文を一時ファイルでGrokへ渡し、実行が終わると削除します。レビュー役のCLI自身は、普段の利用と同じく会話履歴を手元に残すことがあります。
+
 ## しないこと
 
-- 秘密情報の検査はしません。**指定したファイルは、そのレビュー役の提供元へ送られます。** 認証情報や共有してはいけないデータを含むファイルは指定しないでください。利用には各社の規約が適用されます。
+- 秘密情報の検査はしません。認証情報や共有してはいけないデータを含むファイルは指定しないでください。
 - レビュー役が通常読み込むグローバル指示やプロジェクト指示（`AGENTS.md`など）は止めません。
 - 指摘の採否判断・統合、修正、再レビュー、コミット、プッシュはしません。
 
