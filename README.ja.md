@@ -6,7 +6,7 @@
 
 - **どの方向でも**：Claude Code・OpenAI Codex・xAI Grok Buildの間の6方向すべてに対応します
 - **今のログインのまま**：各CLIで普段使っているサインインを使います。APIキーは不要です
-- **レビュー役は読むだけ**：レビュー役には読み取り用の機能だけ（Codexは読み取り専用の隔離モード）を渡し、編集しないよう指示します
+- **レビュー役は読むだけ**：レビュー役には読み取り用の機能だけを渡すか、機能を一切渡しません（Codexは読み取り専用の隔離モード）。そのうえで、編集しないよう指示します
 - **Gitの差分に限らない**：計画書・仕様書・文書・コードを名指しでレビューできます。参考資料（ファイル・フォルダー・URL）はレビュー対象と分けて渡せます
 - **Windowsでそのまま動く**：PowerShell 7だけで動き、WSLは不要です
 
@@ -132,7 +132,7 @@ pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-co
 - **送り方**：`Auto`は小さいテキストを依頼文に埋め込み、大きいファイルやトークンが膨らみやすいファイルは絶対パスだけを渡します。パスを渡す方式では、64KiBを超える行があるとレビュー役が読めない可能性があるため、起動前に止めます。
 - **経過時間ではなく出力の途切れで判断**：出力が流れている間は長いレビューも待ちます。`-IdleTimeoutSeconds`の間まったく出力がない場合だけ、プロセスごと止めます（終了コード124）。
 - **読み取り専用のレビュー役**
-  - Claude：`claude -p`に`Read`だけを渡します（参考フォルダーには`Glob`／`Grep`、URLにはそのドメインだけの`WebFetch`を追加）。
+  - Claude：`claude -p`に、ファイルの中身を依頼文に埋め込むときは機能を一切渡さず、パスを渡すときは`Read`だけを渡します（参考フォルダーには`Glob`／`Grep`、URLにはそのドメインだけの`WebFetch`を追加）。あなたのClaudeに登録された外部連携（MCPサーバー）は読み込ませません（`--strict-mcp-config`）。
   - Codex：`codex exec --sandbox read-only`。Web検索は`-ReferenceUrl`があるときだけ有効にします。
   - Grok：`grok --prompt-file`に`read_file`・`grep`・`list_dir`だけを渡し（参考URLには`web_fetch`を追加）、`--permission-mode dontAsk`で子エージェントも使わせません。Grokの`--sandbox`はWindowsでは効かないため、使える機能を絞ることで読み取り専用にしています。
 - **Codexの探し方**：`-CodexPath`、PATH上のCodex CLI（npm版はパッケージ内の`codex.exe`を直接起動）、Codexデスクトップアプリ同梱のCLIの順です。エディター拡張に同梱されたものは使いません。

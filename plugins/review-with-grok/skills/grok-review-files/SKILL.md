@@ -23,13 +23,24 @@ Requires Windows, PowerShell 7, and the official Grok Build CLI installed at `%U
 2. Before sending anything, tell the user which files will be sent to Grok and which local paths and URLs Grok may consult. A request that names the targets counts as permission for that scope. Ask first only if the targets, the intent to send them, or the presence of secrets is unclear.
 3. Run the runner once with `-Transport Auto`. Put multiple files in one `-FilePath` array. Add `-Language ja` when the user is writing in Japanese; otherwise leave the default English prompt. If the user names a model or reasoning effort for Grok (for example "use grok-4.6", 「Grokをlowで」), pass `-Model` and `-Effort` (such as `low`, `medium`, `high`, or `xhigh`; `grok models` lists what the account offers); otherwise omit them so Grok uses its configured default.
 
+   From PowerShell 7, call the runner directly so arrays and quoting arrive as written:
+
    ```powershell
-   & 'C:\Program Files\PowerShell\7\pwsh.exe' -NoProfile -Command `
-     "& '<skill-dir>\scripts\invoke-grok-review.ps1' -FilePath @('C:\abs\one.md','C:\abs\two.ps1') -Transport Auto"
+   & '<skill-dir>\scripts\invoke-grok-review.ps1' -FilePath @('C:\abs\one.md','C:\abs\two.ps1') -Transport Auto
    ```
 
-   Use `-ReviewRequest` only for a short statement of the change's purpose, scope, or non-goals that the user or the project documents actually give. For a re-review the user asked for, include the round number and the previous High findings, and ask Grok to confirm those first, to report a new High only when it is tied to the latest change and a concrete failure, and to list scope expansions separately as out-of-scope suggestions.
-4. Reviews often take 5 to 20 minutes. Run the command in the background (or with a timeout of at least 30 minutes) and read its output as it arrives instead of waiting on a short command timeout. If your environment allows it, give a short progress note about once a minute. Never start a second review of the same request while one is running.
+   From bash or another shell, pass the same line to PowerShell through a quoted here-document, so the shell does not rewrite it:
+
+   ```bash
+   pwsh -NoProfile -Command - <<'PS'
+   & '<skill-dir>\scripts\invoke-grok-review.ps1' -FilePath @('C:\abs\one.md','C:\abs\two.ps1') -Transport Auto
+   PS
+   ```
+
+   Inside that PowerShell line, wrap every path and the `-ReviewRequest` text in single quotes and write a single quote inside them as `''`; `$` and `"` then pass through unchanged. Do not use `pwsh -File` with several files, because it cannot pass an array.
+
+   Use `-ReviewRequest` for a short note on the change's purpose, scope, or non-goals, taken from what the user or the project documents actually say. For a re-review the user asked for, the note may also include the round number and the previous High findings, and ask Grok to confirm those first, to report a new High only when it is tied to the latest change and a concrete failure, and to list scope expansions separately as out-of-scope suggestions.
+4. Reviews often take 5 to 20 minutes. The runner stops only after a period with no output at all (180 seconds by default), not after a total time, so a long review keeps running while output arrives. Run the command in the background (or with a timeout of at least 30 minutes) and read its output as it arrives instead of waiting on a short command timeout. If your environment allows it, give a short progress note about once a minute. Never start a second review of the same request while one is running.
 5. Check what the runner prints before Grok starts: per-file bytes, longest line, estimated tokens, the selected transport and reason, the review root, the Grok executable, and the fixed argv. Do not ask the user to choose Inline or Path. Grok gets only `read_file`, `grep`, and `list_dir`, plus `web_fetch` for the listed URLs' hosts when `ReferenceUrl` is given.
 6. If Path mode stops before starting because of a very long single line, show the file, line number, characters, and bytes, and ask the user for the original source or a formatted file. Do not switch to Inline or create a temporary copy.
 7. Read Grok's whole answer. Normally report Grok's verdict, every High, Mid, and Low finding with its reason, the references Grok says it used (this is Grok's own report, not something you verified), unverified items, and the runner result. Treat only High findings as blocking and do not promote Mid or Low findings. Do not add your own review, suggestions, or fixes.
@@ -40,7 +51,7 @@ Requires Windows, PowerShell 7, and the official Grok Build CLI installed at `%U
 - `0`: Grok finished and returned a review.
 - `2`: the runner stopped before starting Grok (for example a missing file, an over-limit Inline request, or Grok not installed).
 - `3`: Grok exited 0 but returned no review text; the captured stream is shown on stderr.
-- `124`: no stream event for the idle limit (180 seconds by default), so the runner stopped Grok.
+- `124`: no stream event for the idle limit (180 seconds by default), so the runner stopped Grok. This counts silence, not total time; output may simply have paused. `-IdleTimeoutSeconds` raises the limit. Leave a rerun to the user.
 - Anything else is Grok's own exit code.
 
 Confirm the reason from the runner's stderr message rather than from the number alone. On any failure, show the captured stdout, stderr, and exit code, and leave a rerun to the user. Do not log in, set API keys, retry, or substitute your own or another model's review for Grok's. If Grok reports an authentication problem, say that no Grok review was obtained and ask the user to run `grok login`.

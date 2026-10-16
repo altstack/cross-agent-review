@@ -285,7 +285,7 @@ static class FakeClaude
     Invoke-Test 'multiple UTF-8 files and stream arguments reach Claude without guard dependencies' {
         $result = Invoke-TestRunner -Files @($fileA, $fileB)
         Assert-True ($result.ExitCode -eq 0) "runner failed: exit=$($result.ExitCode) stderr=$($result.Stderr)"
-        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose') "Claude stream arguments differ: $($result.Arguments)"
+        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --tools ') "Inline without references must pass an empty tool list; Claude stream arguments differ: $($result.Arguments)"
         Assert-True ($result.Stdout.Contains('Transport selected: Inline')) 'Auto did not keep small files Inline'
         Assert-True ($result.Stdout.Contains('longest line') -and $result.Stdout.Contains('estimated prompt tokens')) 'preflight diagnostics are missing'
         Assert-True ($result.Input.Contains('Do not do anything other than the review.')) "review-only instruction is missing: input=$($result.Input)"
@@ -332,7 +332,7 @@ static class FakeClaude
         $result = Invoke-TestRunner -Files @($mediumReadableA, $mediumReadableB)
         Assert-True ($result.ExitCode -eq 0) "combined Auto Path runner failed: exit=$($result.ExitCode) stderr=$($result.Stderr)"
         Assert-True ($result.Stdout.Contains('Review total: 2 file(s)') -and $result.Stdout.Contains('Transport selected: Path')) 'combined-size Auto decision is missing'
-        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --tools Read --allowedTools Read') "no-reference Path tools differ: $($result.Arguments)"
+        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --tools Read --allowedTools Read') "no-reference Path tools differ: $($result.Arguments)"
         Assert-True ($result.Input.Contains('Read only the FilePath entries listed.')) 'no-reference Path target restriction is missing'
         Assert-True ($result.Input.Contains('use tools other than Read, or look for other files.')) 'no-reference Path exploration prohibition is missing'
         Assert-True ($result.Input.Contains($mediumReadableA) -and $result.Input.Contains($mediumReadableB)) 'combined Path headings are missing'
@@ -361,7 +361,7 @@ static class FakeClaude
         $requestText = 'Diagnose the three animation failures and suggest minimal fixes.'
         $result = Invoke-TestRunner -Files @($fileA) -Transport Path -ReviewRequest $requestText
         Assert-True ($result.ExitCode -eq 0) "path reference runner failed: exit=$($result.ExitCode) stderr=$($result.Stderr)"
-        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --tools Read --allowedTools Read') "path mode Claude arguments differ: $($result.Arguments)"
+        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --tools Read --allowedTools Read') "path mode Claude arguments differ: $($result.Arguments)"
         Assert-True ($result.Input.Contains($fileA)) 'explicit file path is missing'
         Assert-True ($result.Input.Contains($requestText)) 'custom review request is missing'
         Assert-True ($result.Input.Contains('Read tool')) 'Read-only instruction is missing'
@@ -369,7 +369,7 @@ static class FakeClaude
 
         $fileReference = Invoke-TestRunner -Files @($fileA) -ReferencePaths @($referenceFile)
         Assert-True ($fileReference.ExitCode -eq 0) "file-only reference run failed: exit=$($fileReference.ExitCode) stderr=$($fileReference.Stderr)"
-        Assert-True ($fileReference.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --tools Read --allowedTools Read --add-dir ' + $spaceDirectory) "file-only reference tools differ: $($fileReference.Arguments)"
+        Assert-True ($fileReference.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --tools Read --allowedTools Read --add-dir ' + $spaceDirectory) "file-only reference tools differ: $($fileReference.Arguments)"
         Assert-True ($fileReference.Input.Contains('do not open other files in that directory') -and -not $fileReference.Input.Contains('Glob/Grep')) 'file-only reference boundary is missing'
     }
 
@@ -385,16 +385,16 @@ static class FakeClaude
     Invoke-Test 'npm-style claude.cmd is started through cmd.exe with the same arguments' {
         $result = Invoke-TestRunner -Files @($fileA) -ReferencePaths @($referenceFile) -PathPrefix $fakeCmdDirectory
         Assert-True ($result.ExitCode -eq 0) "cmd shim run failed: exit=$($result.ExitCode) stderr=$($result.Stderr)"
-        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --tools Read --allowedTools Read --add-dir ' + $spaceDirectory) "cmd shim arguments differ: $($result.Arguments)"
+        Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --tools Read --allowedTools Read --add-dir ' + $spaceDirectory) "cmd shim arguments differ: $($result.Arguments)"
         Assert-True ($result.Stdout.Contains('fake review') -and $result.Input.Contains($fileA)) 'cmd shim run did not return the review or receive the prompt'
     }
     Invoke-Test 'Model and Effort reach Claude only when given and unsafe values stop before start' {
         $chosen = Invoke-TestRunner -Files @($fileA) -Model 'opus' -Effort 'high' -DirectInvocation
         Assert-True ($chosen.ExitCode -eq 0) "model run failed: exit=$($chosen.ExitCode) stderr=$($chosen.Stderr)"
-        Assert-True ($chosen.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --model opus --effort high') "model arguments differ: $($chosen.Arguments)"
+        Assert-True ($chosen.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --model opus --effort high --tools ') "model arguments differ: $($chosen.Arguments)"
         Assert-True ($chosen.Stdout.Contains('Claude model: opus; effort: high')) 'the chosen model was not displayed'
         $shim = Invoke-TestRunner -Files @($fileA) -Model 'claude-opus-5-5' -PathPrefix $fakeCmdDirectory -DirectInvocation
-        Assert-True ($shim.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --model claude-opus-5-5') "cmd shim model arguments differ: $($shim.Arguments)"
+        Assert-True ($shim.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config --model claude-opus-5-5 --tools ') "cmd shim model arguments differ: $($shim.Arguments)"
         $default = Invoke-TestRunner -Files @($fileA) -DirectInvocation
         Assert-True (-not $default.Arguments.Contains('--model') -and $default.Stdout.Contains('Claude model: default')) 'a model was passed without -Model'
         $unsafe = Invoke-TestRunner -Files @($fileA) -Model 'opus & calc' -DirectInvocation
