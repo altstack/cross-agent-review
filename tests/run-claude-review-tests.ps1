@@ -31,6 +31,8 @@ function Invoke-TestRunner {
         [int]$IdleTimeoutSeconds = 10,
         [string]$SaveOutput,
         [string]$Language,
+        [string]$Model,
+        [string]$Effort,
         [string]$PathPrefix,
         [string]$Transport,
         [string]$ReviewRequest,
@@ -46,6 +48,12 @@ function Invoke-TestRunner {
     }
     if (-not [string]::IsNullOrWhiteSpace($Language)) {
         $command += " -Language $(ConvertTo-TestLiteral $Language)"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Model)) {
+        $command += " -Model $(ConvertTo-TestLiteral $Model)"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+        $command += " -Effort $(ConvertTo-TestLiteral $Effort)"
     }
     if (-not [string]::IsNullOrWhiteSpace($Transport)) {
         $command += " -Transport $(ConvertTo-TestLiteral $Transport)"
@@ -87,6 +95,14 @@ function Invoke-TestRunner {
         if (-not [string]::IsNullOrWhiteSpace($Language)) {
             [void]$start.ArgumentList.Add('-Language')
             [void]$start.ArgumentList.Add($Language)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Model)) {
+            [void]$start.ArgumentList.Add('-Model')
+            [void]$start.ArgumentList.Add($Model)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+            [void]$start.ArgumentList.Add('-Effort')
+            [void]$start.ArgumentList.Add($Effort)
         }
         if (-not [string]::IsNullOrWhiteSpace($Transport)) {
             [void]$start.ArgumentList.Add('-Transport')
@@ -371,6 +387,18 @@ static class FakeClaude
         Assert-True ($result.ExitCode -eq 0) "cmd shim run failed: exit=$($result.ExitCode) stderr=$($result.Stderr)"
         Assert-True ($result.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --tools Read --allowedTools Read --add-dir ' + $spaceDirectory) "cmd shim arguments differ: $($result.Arguments)"
         Assert-True ($result.Stdout.Contains('fake review') -and $result.Input.Contains($fileA)) 'cmd shim run did not return the review or receive the prompt'
+    }
+    Invoke-Test 'Model and Effort reach Claude only when given and unsafe values stop before start' {
+        $chosen = Invoke-TestRunner -Files @($fileA) -Model 'opus' -Effort 'high' -DirectInvocation
+        Assert-True ($chosen.ExitCode -eq 0) "model run failed: exit=$($chosen.ExitCode) stderr=$($chosen.Stderr)"
+        Assert-True ($chosen.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --model opus --effort high') "model arguments differ: $($chosen.Arguments)"
+        Assert-True ($chosen.Stdout.Contains('Claude model: opus; effort: high')) 'the chosen model was not displayed'
+        $shim = Invoke-TestRunner -Files @($fileA) -Model 'claude-opus-5-5' -PathPrefix $fakeCmdDirectory -DirectInvocation
+        Assert-True ($shim.Arguments -eq '-p --output-format stream-json --include-partial-messages --verbose --model claude-opus-5-5') "cmd shim model arguments differ: $($shim.Arguments)"
+        $default = Invoke-TestRunner -Files @($fileA) -DirectInvocation
+        Assert-True (-not $default.Arguments.Contains('--model') -and $default.Stdout.Contains('Claude model: default')) 'a model was passed without -Model'
+        $unsafe = Invoke-TestRunner -Files @($fileA) -Model 'opus & calc' -DirectInvocation
+        Assert-True ($unsafe.ExitCode -eq 2 -and $null -eq $unsafe.Input -and $unsafe.Stderr.Contains('may contain only')) 'an unsafe model value was not stopped before start'
     }
     Invoke-Test 'explicit Inline and Path transports remain available' {
         $inline = Invoke-TestRunner -Files @($fileA) -Transport Inline

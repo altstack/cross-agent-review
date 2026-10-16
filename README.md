@@ -46,6 +46,7 @@ In a chat with one agent, name the files and the reviewer:
 
 - "Have Codex review `docs/plan.md`."
 - "Ask Grok to review `src/app.ps1`, using `docs/spec.md` as reference."
+- "Have Codex review `plan.md` with gpt-6.1-sol at high effort." (model and effort are optional)
 - 「この2ファイルをClaudeレビューして」 (Japanese requests get a Japanese review)
 
 The calling agent tells you what will be sent, runs the reviewer once, waits for it, and reports the reviewer's verdict and every High, Mid, and Low finding. Ask for the full text if you want it. Nothing is edited, retried, or committed on the reviewer's say-so.
@@ -66,6 +67,8 @@ pwsh -File skills\codex-review-files\scripts\invoke-codex-review.ps1 `
 | `-ReferenceUrl` | Supporting URLs (http/https, no local-network hosts) |
 | `-ReviewRequest` | A short note on purpose, scope, or non-goals |
 | `-Language` | `en` (default) or `ja` for the reviewer prompt |
+| `-Model` | Reviewer model, for example `opus`, `gpt-6.1-sol`, or `grok-4.6` (default: the CLI's own setting) |
+| `-Effort` | Reasoning effort, for example `low` or `high` (default: the CLI's own setting) |
 | `-Transport` | `Auto` (default), `Inline`, or `Path` |
 | `-SaveOutput` | Also save the review text to a file |
 | `-IdleTimeoutSeconds` | Stop if the reviewer is silent this long (default 180) |

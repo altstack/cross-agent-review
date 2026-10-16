@@ -36,6 +36,11 @@ param(
     [ValidateSet('en', 'ja')]
     [string]$Language = 'en',
 
+    # Optional. Passed as -m and --reasoning-effort only when given; otherwise Grok's default.
+    [string]$Model,
+
+    [string]$Effort,
+
     [string]$SaveOutput,
 
     [ValidateRange(1, 86400)]
@@ -151,6 +156,11 @@ function Get-GrokReviewRoot {
 
 $promptDirectory = $null
 try {
+    foreach ($setting in @(@('Model', $Model), @('Effort', $Effort))) {
+        if (-not [string]::IsNullOrWhiteSpace($setting[1]) -and $setting[1] -notmatch '^[A-Za-z0-9][A-Za-z0-9._:/\[\]-]*$') {
+            throw "-$($setting[0]) may contain only letters, digits, and . _ : / [ ] -: $($setting[1]). Grok was not started."
+        }
+    }
     $utf8 = [Text.UTF8Encoding]::new($false, $true)
     $inlineByteLimit = 512KB
     $inlineTokenLimit = 400000
@@ -434,10 +444,15 @@ try {
     foreach ($hostName in @($referenceUris | ForEach-Object Host | Sort-Object -Unique)) {
         $argv += @('--allow', "WebFetch(domain:$hostName)")
     }
+    if (-not [string]::IsNullOrWhiteSpace($Model)) { $argv += @('-m', $Model) }
+    if (-not [string]::IsNullOrWhiteSpace($Effort)) { $argv += @('--reasoning-effort', $Effort) }
     $argv += '--no-subagents'
     if ($referenceUris.Count -eq 0) {
         $argv += '--disable-web-search'
     }
+    $modelDisplay = if ([string]::IsNullOrWhiteSpace($Model)) { 'default (Grok setting)' } else { $Model }
+    $effortDisplay = if ([string]::IsNullOrWhiteSpace($Effort)) { 'default' } else { $Effort }
+    [Console]::Out.WriteLine("Grok model: $modelDisplay; effort: $effortDisplay")
     [Console]::Out.WriteLine('Grok argv: ' + [string]::Join(' ', $argv))
 
     $start = [Diagnostics.ProcessStartInfo]::new()

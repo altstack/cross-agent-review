@@ -35,6 +35,11 @@ param(
     [ValidateSet('en', 'ja')]
     [string]$Language = 'en',
 
+    # Optional. Passed to claude --model and --effort only when given; otherwise Claude Code's default.
+    [string]$Model,
+
+    [string]$Effort,
+
     [string]$SaveOutput,
 
     [ValidateRange(1, 86400)]
@@ -97,6 +102,11 @@ $messages = @{
 }
 
 try {
+    foreach ($setting in @(@('Model', $Model), @('Effort', $Effort))) {
+        if (-not [string]::IsNullOrWhiteSpace($setting[1]) -and $setting[1] -notmatch '^[A-Za-z0-9][A-Za-z0-9._:/\[\]-]*$') {
+            throw "-$($setting[0]) may contain only letters, digits, and . _ : / [ ] -: $($setting[1]). Claude was not started."
+        }
+    }
     $utf8 = [Text.UTF8Encoding]::new($false, $true)
     $inlineByteLimit = 512KB
     $inlineTokenLimit = 400000
@@ -299,6 +309,12 @@ try {
     }
 
     $claude = Get-Command claude -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    $modelDisplay = if ([string]::IsNullOrWhiteSpace($Model)) { 'default (Claude Code setting)' } else { $Model }
+    $effortDisplay = if ([string]::IsNullOrWhiteSpace($Effort)) { 'default' } else { $Effort }
+    [Console]::Out.WriteLine("Claude model: $modelDisplay; effort: $effortDisplay")
+    $modelArguments = @()
+    if (-not [string]::IsNullOrWhiteSpace($Model)) { $modelArguments += @('--model', $Model) }
+    if (-not [string]::IsNullOrWhiteSpace($Effort)) { $modelArguments += @('--effort', $Effort) }
 
     # --- Build the fixed prompt ---
     $text = $messages[$Language]
@@ -374,11 +390,11 @@ try {
             ' --add-dir ' + [string]::Join(' ', @($addDirectories | ForEach-Object { '"' + $_.Replace('"', '""') + '"' }))
         }
         else { '' }
-        $start.Arguments = '/d /s /c ""' + $claude.Source + '" -p --output-format stream-json --include-partial-messages --verbose' + $toolArguments + $addDirectoryArguments + '"'
+        $start.Arguments = '/d /s /c ""' + $claude.Source + '" -p --output-format stream-json --include-partial-messages --verbose' + $(if ($modelArguments.Count -gt 0) { ' ' + [string]::Join(' ', $modelArguments) } else { '' }) + $toolArguments + $addDirectoryArguments + '"'
     }
     else {
         $start.FileName = $claude.Source
-        $arguments = @('-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose')
+        $arguments = @('-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose') + $modelArguments
         if ($toolNames.Count -gt 0) {
             $arguments += @('--tools', [string]::Join(',', $toolNames), '--allowedTools', [string]::Join(',', $allowedTools))
         }

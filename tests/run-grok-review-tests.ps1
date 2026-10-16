@@ -62,7 +62,9 @@ function Invoke-TestRunner {
         [string[]]$ReferenceUrls = @(),
         [string]$SaveOutput,
         [string]$GrokHome,
-        [string]$Language
+        [string]$Language,
+        [string]$Model,
+        [string]$Effort
     )
     $promptCopyPath = Join-Path $tempRoot 'fake-prompt.txt'
     $argsPath = Join-Path $tempRoot 'fake-args.txt'
@@ -102,6 +104,12 @@ function Invoke-TestRunner {
         if (-not [string]::IsNullOrWhiteSpace($Language)) {
             $command += " -Language $(ConvertTo-TestLiteral $Language)"
         }
+        if (-not [string]::IsNullOrWhiteSpace($Model)) {
+            $command += " -Model $(ConvertTo-TestLiteral $Model)"
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+            $command += " -Effort $(ConvertTo-TestLiteral $Effort)"
+        }
         [void]$start.ArgumentList.Add('-EncodedCommand')
         [void]$start.ArgumentList.Add([Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command)))
     }
@@ -135,6 +143,14 @@ function Invoke-TestRunner {
         if (-not [string]::IsNullOrWhiteSpace($Language)) {
             [void]$start.ArgumentList.Add('-Language')
             [void]$start.ArgumentList.Add($Language)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Model)) {
+            [void]$start.ArgumentList.Add('-Model')
+            [void]$start.ArgumentList.Add($Model)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+            [void]$start.ArgumentList.Add('-Effort')
+            [void]$start.ArgumentList.Add($Effort)
         }
     }
 
@@ -420,7 +436,19 @@ static class FakeGrok
         $en = Invoke-TestRunner -Files @($fileA)
         Assert-True ($en.Input.Contains('OK to implement') -and -not $en.Input.Contains('実装可')) 'English is not the default prompt'
     }
-}
+
+    Invoke-Test '15. Model and Effort reach Grok only when given and unsafe values stop before start' {
+        $chosen = Invoke-TestRunner -Files @($fileA) -Model 'grok-4.6' -Effort 'low'
+        Assert-True ($chosen.ExitCode -eq 0) "model run failed: exit=$($chosen.ExitCode) stderr=$($chosen.Stderr)"
+        $rest = [string]::Join(' ', $chosen.ArgumentList[2..($chosen.ArgumentList.Length - 1)])
+        $expected = "--output-format streaming-json --cwd $reviewDirectory --tools read_file,grep,list_dir --permission-mode dontAsk --allow Read --allow Grep -m grok-4.6 --reasoning-effort low --no-subagents --disable-web-search"
+        Assert-True ($rest -eq $expected) "model argv differs: $rest"
+        Assert-True ($chosen.Stdout.Contains('Grok model: grok-4.6; effort: low')) 'the chosen model was not displayed'
+        $default = Invoke-TestRunner -Files @($fileA)
+        Assert-True (@($default.ArgumentList | Where-Object { $_ -in @('-m', '--reasoning-effort') }).Count -eq 0 -and $default.Stdout.Contains('Grok model: default')) 'a model was passed without -Model'
+        $unsafe = Invoke-TestRunner -Files @($fileA) -Model 'grok 4.6'
+        Assert-True ($unsafe.ExitCode -eq 2 -and $null -eq $unsafe.Arguments -and $unsafe.Stderr.Contains('may contain only')) 'an unsafe model value was not stopped before start'
+    }}
 finally {
     if (Test-Path -LiteralPath $tempRoot) {
         Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue

@@ -60,6 +60,8 @@ function Invoke-TestRunner {
         [string]$PathValue,
         [string]$CodexPath,
         [string]$Language,
+        [string]$Model,
+        [string]$Effort,
         [switch]$LeaveStdinUnread
     )
     $stdinPath = Join-Path $tempRoot 'fake-stdin.txt'
@@ -103,6 +105,12 @@ function Invoke-TestRunner {
         if (-not [string]::IsNullOrWhiteSpace($Language)) {
             $command += " -Language $(ConvertTo-TestLiteral $Language)"
         }
+        if (-not [string]::IsNullOrWhiteSpace($Model)) {
+            $command += " -Model $(ConvertTo-TestLiteral $Model)"
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+            $command += " -Effort $(ConvertTo-TestLiteral $Effort)"
+        }
         [void]$start.ArgumentList.Add('-EncodedCommand')
         [void]$start.ArgumentList.Add([Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command)))
     }
@@ -140,6 +148,14 @@ function Invoke-TestRunner {
         if (-not [string]::IsNullOrWhiteSpace($Language)) {
             [void]$start.ArgumentList.Add('-Language')
             [void]$start.ArgumentList.Add($Language)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Model)) {
+            [void]$start.ArgumentList.Add('-Model')
+            [void]$start.ArgumentList.Add($Model)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($Effort)) {
+            [void]$start.ArgumentList.Add('-Effort')
+            [void]$start.ArgumentList.Add($Effort)
         }
     }
 
@@ -497,7 +513,19 @@ static class FakeCodex
         $en = Invoke-TestRunner -Files @($fileA)
         Assert-True ($en.Input.Contains('OK to implement') -and -not $en.Input.Contains('実装可')) 'English is not the default prompt'
     }
-}
+
+    Invoke-Test '15. Model and Effort reach Codex only when given and unsafe values stop before start' {
+        $chosen = Invoke-TestRunner -Files @($fileA) -Model 'gpt-6.1-sol' -Effort 'high'
+        Assert-True ($chosen.ExitCode -eq 0) "model run failed: exit=$($chosen.ExitCode) stderr=$($chosen.Stderr)"
+        $arguments = @($chosen.Arguments -split "`n")
+        $rest = [string]::Join(' ', $arguments[1..($arguments.Length - 1)])
+        Assert-True ($rest -eq "--sandbox read-only --color never --skip-git-repo-check -C $reviewDirectory -m gpt-6.1-sol -c model_reasoning_effort=`"high`" -") "model argv differs: $rest"
+        Assert-True ($chosen.Stdout.Contains('Codex model: gpt-6.1-sol; effort: high')) 'the chosen model was not displayed'
+        $default = Invoke-TestRunner -Files @($fileA)
+        Assert-True (-not $default.Arguments.Contains("`n-m`n") -and -not $default.Arguments.Contains('model_reasoning_effort') -and $default.Stdout.Contains('Codex model: default')) 'a model was passed without -Model'
+        $unsafe = Invoke-TestRunner -Files @($fileA) -Effort 'high"; rm'
+        Assert-True ($unsafe.ExitCode -eq 2 -and $null -eq $unsafe.Input -and $unsafe.Stderr.Contains('may contain only')) 'an unsafe effort value was not stopped before start'
+    }}
 finally {
     if (Test-Path -LiteralPath $tempRoot) {
         Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue

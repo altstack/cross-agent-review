@@ -41,6 +41,11 @@ param(
     [ValidateSet('en', 'ja')]
     [string]$Language = 'en',
 
+    # Optional. Passed as -m and -c model_reasoning_effort only when given; otherwise the Codex config default.
+    [string]$Model,
+
+    [string]$Effort,
+
     [string]$CodexPath,
 
     [string]$SaveOutput,
@@ -212,6 +217,11 @@ function Find-CodexExecutable {
 }
 
 try {
+    foreach ($setting in @(@('Model', $Model), @('Effort', $Effort))) {
+        if (-not [string]::IsNullOrWhiteSpace($setting[1]) -and $setting[1] -notmatch '^[A-Za-z0-9][A-Za-z0-9._:/\[\]-]*$') {
+            throw "-$($setting[0]) may contain only letters, digits, and . _ : / [ ] -: $($setting[1]). Codex was not started."
+        }
+    }
     $utf8 = [Text.UTF8Encoding]::new($false, $true)
     $inlineByteLimit = 512KB
     $inlineTokenLimit = 400000
@@ -465,10 +475,15 @@ try {
     # Live web search only for explicit URLs. A root-level `--search` placed before `exec` is
     # accepted but not forwarded to exec, so the setting is passed to exec itself with -c.
     $argv = @('exec', '--sandbox', 'read-only', '--color', 'never', '--skip-git-repo-check', '-C', $reviewRoot)
+    if (-not [string]::IsNullOrWhiteSpace($Model)) { $argv += @('-m', $Model) }
+    if (-not [string]::IsNullOrWhiteSpace($Effort)) { $argv += @('-c', "model_reasoning_effort=`"$Effort`"") }
     if ($referenceUris.Count -gt 0) {
         $argv += @('-c', 'web_search="live"')
     }
     $argv += '-'
+    $modelDisplay = if ([string]::IsNullOrWhiteSpace($Model)) { 'default (Codex config)' } else { $Model }
+    $effortDisplay = if ([string]::IsNullOrWhiteSpace($Effort)) { 'default' } else { $Effort }
+    [Console]::Out.WriteLine("Codex model: $modelDisplay; effort: $effortDisplay")
     [Console]::Out.WriteLine('Codex argv: ' + [string]::Join(' ', $argv))
 
     $start = [Diagnostics.ProcessStartInfo]::new()

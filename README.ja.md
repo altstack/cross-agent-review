@@ -46,6 +46,7 @@ pwsh -File install.ps1          # 事前に確認するなら: pwsh -File instal
 
 - 「`docs/plan.md`をCodexにレビューさせて」
 - 「`docs/spec.md`を参考に、`src/app.ps1`をGrokにレビューさせて」
+- 「`plan.md`をGrokのgrok-4.6、推論の強さlowでレビューさせて」（モデルと推論の強さの指定は任意）
 - "Have Claude review these two files."（英語で頼むと英語でレビューが返ります）
 
 呼び出し側のエージェントは、送る内容を示してからレビュー役を1回だけ起動し、終わるまで待って、レビュー役の判定とHigh／Mid／Lowの全指摘を報告します。全文が必要なら頼んでください。レビュー結果だけを理由に、編集・再送・コミットはしません。
@@ -66,6 +67,8 @@ pwsh -File skills\codex-review-files\scripts\invoke-codex-review.ps1 `
 | `-ReferenceUrl` | 参考URL（http／https。ローカルネットワークは不可） |
 | `-ReviewRequest` | 目的・範囲・対象外を短く伝える補足 |
 | `-Language` | レビュー役への依頼文の言語。`en`（既定）または`ja` |
+| `-Model` | レビュー役のモデル。例：`opus`、`gpt-6.1-sol`、`grok-4.6`（既定は各CLIの設定） |
+| `-Effort` | 推論の強さ。例：`low`、`high`（既定は各CLIの設定） |
 | `-Transport` | `Auto`（既定）、`Inline`、`Path` |
 | `-SaveOutput` | レビュー本文をファイルにも保存する |
 | `-IdleTimeoutSeconds` | レビュー役がこの秒数だけ無出力なら止める（既定180） |
