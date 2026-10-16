@@ -1,0 +1,22 @@
+{
+  "name": "review-with-codex",
+  "version": "0.2.0",
+  "description": "Ask OpenAI Codex for a one-shot, read-only review of files you name. Install it in Claude Code or Grok. Windows, PowerShell 7, and a signed-in OpenAI Codex CLI are required.",
+  "author": {
+    "name": "altstack",
+    "url": "https://github.com/altstack"
+  },
+  "homepage": "https://github.com/altstack/cross-agent-review",
+  "repository": "https://github.com/altstack/cross-agent-review",
+  "license": "MIT",
+  "keywords": [
+    "review",
+    "code-review",
+    "second-opinion",
+    "claude",
+    "codex",
+    "grok",
+    "windows",
+    "powershell"
+  ]
+}

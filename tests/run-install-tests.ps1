@@ -104,9 +104,9 @@ try {
 
     Invoke-Test '5. a missing skill source stops -Force before anything installed is removed' {
         $partialRepo = Join-Path $tempRoot 'partial repo'
-        [void][IO.Directory]::CreateDirectory((Join-Path $partialRepo 'skills'))
+        [void][IO.Directory]::CreateDirectory((Join-Path $partialRepo 'plugins\review-with-grok\skills'))
         Copy-Item -LiteralPath $installer -Destination (Join-Path $partialRepo 'install.ps1')
-        Copy-Item -LiteralPath (Join-Path $repoRoot 'skills\grok-review-files') -Destination (Join-Path $partialRepo 'skills\grok-review-files') -Recurse
+        Copy-Item -LiteralPath (Join-Path $repoRoot 'plugins\review-with-grok\skills\grok-review-files') -Destination (Join-Path $partialRepo 'plugins\review-with-grok\skills\grok-review-files') -Recurse
         $homePath = New-TestHome 'partial' @('.claude')
         [void](Invoke-Installer $homePath)
         $marker = Join-Path $homePath '.claude\skills\codex-review-files\local-note.txt'

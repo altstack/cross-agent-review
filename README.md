@@ -22,7 +22,58 @@ If you only need Codex to review your git changes from Claude Code, OpenAI's off
 
 You can install only the agents you use. A skill whose reviewer is missing stops with a clear message.
 
+## Where it runs
+
+The skills are plain Agent Skills, so they work wherever these agents load skills or plugins. The author uses them every day in:
+
+- [T3 Code](https://github.com/pingdotgg/t3code), the desktop app that runs Claude Code, Codex, and Grok side by side
+- the ChatGPT desktop app for Windows (Codex)
+- the Claude desktop app (Claude Code)
+- the Claude Code and Codex extensions for VS Code
+- the `claude`, `codex`, and `grok` CLIs in a terminal
+
+Whichever app you chat in, the reviewer is started through its own CLI, so the reviewer's CLI must be installed and signed in.
+
 ## Install
+
+Install the plugins for the reviewers you want to call, in the agent you chat with. No agent needs the plugin that calls itself.
+
+| You chat in | Install |
+|---|---|
+| Claude Code | `review-with-codex`, `review-with-grok` |
+| Codex | `review-with-claude`, `review-with-grok` |
+| Grok Build | `review-with-claude`, `review-with-codex` |
+
+### Option A: plugins (recommended)
+
+Claude Code:
+
+```powershell
+claude plugin marketplace add altstack/cross-agent-review
+claude plugin install review-with-codex@cross-agent-review
+claude plugin install review-with-grok@cross-agent-review
+```
+
+Codex:
+
+```powershell
+codex plugin marketplace add altstack/cross-agent-review
+codex plugin add review-with-claude@cross-agent-review
+codex plugin add review-with-grok@cross-agent-review
+```
+
+Grok Build:
+
+```powershell
+grok plugin install altstack/cross-agent-review#plugins/review-with-claude
+grok plugin install altstack/cross-agent-review#plugins/review-with-codex
+```
+
+Start a new chat session afterwards. In Claude Code the skills appear with the plugin name as a prefix (for example `review-with-codex:codex-review-files`); asking in plain words works the same. Get updates with `claude plugin marketplace update`, `codex plugin marketplace upgrade`, or `grok plugin update`.
+
+### Option B: copy the skills with install.ps1
+
+Use this when an app does not support plugins, or if you prefer plain skill folders. Use either option, not both, or each skill shows up twice.
 
 ```powershell
 git clone https://github.com/altstack/cross-agent-review.git
@@ -38,8 +89,7 @@ The installer copies each skill (with its runner inside) into the agents found o
 | Codex | `~/.agents/skills` | `claude-review-files`, `grok-review-files` |
 | Grok Build | `~/.grok/skills` | `claude-review-files`, `codex-review-files` |
 
-No agent gets the skill that would call itself. Existing folders are kept unless you pass `-Force`. Remove everything with `pwsh -File install.ps1 -Uninstall`. Start a new chat session after installing.
-
+Existing folders are kept unless you pass `-Force`. Remove everything with `pwsh -File install.ps1 -Uninstall`. Start a new chat session after installing.
 ## Use
 
 In a chat with one agent, name the files and the reviewer:
@@ -54,7 +104,7 @@ The calling agent tells you what will be sent, runs the reviewer once, waits for
 You can also run a runner directly:
 
 ```powershell
-pwsh -File skills\codex-review-files\scripts\invoke-codex-review.ps1 `
+pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-codex-review.ps1 `
   -FilePath C:\work\plan.md `
   -ReferencePath C:\work\specs `
   -ReferenceUrl https://example.com/api-docs

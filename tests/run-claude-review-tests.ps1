@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$runner = Join-Path $repoRoot 'skills\claude-review-files\scripts\invoke-claude-review.ps1'
+$runner = Join-Path $repoRoot 'plugins\review-with-claude\skills\claude-review-files\scripts\invoke-claude-review.ps1'
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('gcr-simple-review-' + [Guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Process -Id $PID).Path
 $passed = 0

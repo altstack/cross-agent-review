@@ -7,6 +7,8 @@
       Codex        ~/.agents/skills   claude-review-files, grok-review-files
       Grok Build   ~/.grok/skills     claude-review-files, codex-review-files
 
+    This copies plain skill folders. Plugin installs (see README) are the alternative; use one or the other.
+
     No agent gets the skill that would call itself. Grok also scans ~/.claude/skills, so it can
     see grok-review-files there; that skill tells Grok not to use it.
 
@@ -41,7 +43,8 @@ $targets = [ordered]@{
     Grok = @{ Home = '.grok'; Root = '.grok\skills'; Skills = @('claude-review-files', 'codex-review-files') }
 }
 $explicitAgents = $PSBoundParameters.ContainsKey('Agent')
-$sourceRoot = Join-Path $PSScriptRoot 'skills'
+# Each skill lives inside its plugin folder: plugins\<plugin>\skills\<skill>.
+$pluginOf = @{ 'claude-review-files' = 'review-with-claude'; 'codex-review-files' = 'review-with-codex'; 'grok-review-files' = 'review-with-grok' }
 
 foreach ($name in $Agent) {
     $target = $targets[$name]
@@ -67,7 +70,7 @@ foreach ($name in $Agent) {
             Write-Output "Keep ${name}: $destination already exists. Use -Force to replace it."
             continue
         }
-        $source = Join-Path $sourceRoot $skill
+        $source = Join-Path $PSScriptRoot "plugins\$($pluginOf[$skill])\skills\$skill"
         if (-not [IO.Directory]::Exists($source)) {
             throw "Skill source folder was not found: $source. Run install.ps1 from a complete copy of the repository. Nothing was removed."
         }

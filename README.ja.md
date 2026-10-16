@@ -22,7 +22,58 @@ Claude CodeからCodexへGitの変更だけをレビューさせたいなら、O
 
 使うエージェントだけを入れれば十分です。レビュー役が見つからない場合は、分かりやすいメッセージを出して止まります。
 
+## 動作環境
+
+スキルは標準的なAgent Skillsの形式なので、これらのエージェントがスキルやプラグインを読み込める場所ならどこでも動きます。作者は次の環境で毎日使っています。
+
+- [T3 Code](https://github.com/pingdotgg/t3code)（Claude Code・Codex・Grokを並べて使えるデスクトップアプリ）
+- Windows版ChatGPTデスクトップアプリ（Codex）
+- Claudeデスクトップアプリ（Claude Code）
+- VS CodeのClaude Code拡張とCodex拡張
+- ターミナルで使う`claude`・`codex`・`grok`の各CLI
+
+どのアプリで会話していても、レビュー役はそのCLIを通じて起動します。そのため、レビュー役のCLIをインストールしてサインインしておく必要があります。
+
 ## インストール
+
+会話に使うエージェントへ、呼び出したいレビュー役のプラグインを入れます。自分自身を呼ぶプラグインは不要です。
+
+| 会話に使うエージェント | 入れるもの |
+|---|---|
+| Claude Code | `review-with-codex`、`review-with-grok` |
+| Codex | `review-with-claude`、`review-with-grok` |
+| Grok Build | `review-with-claude`、`review-with-codex` |
+
+### 方法A：プラグインで入れる（推奨）
+
+Claude Code：
+
+```powershell
+claude plugin marketplace add altstack/cross-agent-review
+claude plugin install review-with-codex@cross-agent-review
+claude plugin install review-with-grok@cross-agent-review
+```
+
+Codex：
+
+```powershell
+codex plugin marketplace add altstack/cross-agent-review
+codex plugin add review-with-claude@cross-agent-review
+codex plugin add review-with-grok@cross-agent-review
+```
+
+Grok Build：
+
+```powershell
+grok plugin install altstack/cross-agent-review#plugins/review-with-claude
+grok plugin install altstack/cross-agent-review#plugins/review-with-codex
+```
+
+入れたあとは新しい会話を始めてください。Claude Codeでは、スキルがプラグイン名付きで表示されます（例：`review-with-codex:codex-review-files`）が、普通の言葉で頼めば同じように動きます。更新は`claude plugin marketplace update`、`codex plugin marketplace upgrade`、`grok plugin update`で行えます。
+
+### 方法B：install.ps1でスキルをコピーする
+
+プラグインに対応していないアプリで使う場合や、スキルのフォルダーをそのまま置きたい場合はこちらです。方法AとBはどちらか一方だけにしてください。両方使うと、同じスキルが2つ表示されます。
 
 ```powershell
 git clone https://github.com/altstack/cross-agent-review.git
@@ -38,8 +89,7 @@ pwsh -File install.ps1          # 事前に確認するなら: pwsh -File instal
 | Codex | `~/.agents/skills` | `claude-review-files`、`grok-review-files` |
 | Grok Build | `~/.grok/skills` | `claude-review-files`、`codex-review-files` |
 
-どのエージェントにも、自分自身を呼ぶスキルは入れません。既存のフォルダーは`-Force`を付けない限り残します。削除は`pwsh -File install.ps1 -Uninstall`です。インストール後は新しいチャットを始めてください。
-
+既存のフォルダーは`-Force`を付けない限り残します。削除は`pwsh -File install.ps1 -Uninstall`です。インストール後は新しい会話を始めてください。
 ## 使い方
 
 あるエージェントとの会話で、ファイルとレビュー役を指定します。
@@ -54,7 +104,7 @@ pwsh -File install.ps1          # 事前に確認するなら: pwsh -File instal
 runnerを直接実行することもできます。
 
 ```powershell
-pwsh -File skills\codex-review-files\scripts\invoke-codex-review.ps1 `
+pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-codex-review.ps1 `
   -FilePath C:\work\plan.md `
   -ReferencePath C:\work\specs `
   -ReferenceUrl https://example.com/api-docs

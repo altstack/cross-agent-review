@@ -1,0 +1,28 @@
+{
+  "name": "cross-agent-review",
+  "description": "One-shot, read-only file reviews between Claude Code, OpenAI Codex, and xAI Grok on Windows. Install the plugins for the reviewers you want to call, not the one you are chatting with.",
+  "owner": {
+    "name": "altstack",
+    "url": "https://github.com/altstack"
+  },
+  "plugins": [
+    {
+      "name": "review-with-claude",
+      "source": "./plugins/review-with-claude",
+      "description": "Ask Claude Code to review named files. Install in Codex or Grok.",
+      "category": "development"
+    },
+    {
+      "name": "review-with-codex",
+      "source": "./plugins/review-with-codex",
+      "description": "Ask OpenAI Codex to review named files. Install in Claude Code or Grok.",
+      "category": "development"
+    },
+    {
+      "name": "review-with-grok",
+      "source": "./plugins/review-with-grok",
+      "description": "Ask xAI Grok to review named files. Install in Claude Code or Codex.",
+      "category": "development"
+    }
+  ]
+}
