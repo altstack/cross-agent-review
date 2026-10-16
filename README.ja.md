@@ -36,15 +36,35 @@ Claude CodeからCodexへGitの変更だけをレビューさせたいなら、O
 
 ## インストール
 
-会話に使うエージェントへ、呼び出したいレビュー役のプラグインを入れます。自分自身を呼ぶプラグインは不要です。
+会話に使うエージェントへ、呼び出したいレビュー役を入れます。自分自身を呼ぶものは不要です。下の2つの方法は、同じスキルとrunnerを入れます。どちらか一方だけにしてください。両方使うと、同じスキルが2つ表示されます。
 
-| 会話に使うエージェント | 入れるもの |
+| 会話に使うエージェント | 方法A：スキル | 方法B：プラグイン |
+|---|---|---|
+| Claude Code | `codex-review-files`、`grok-review-files` | `review-with-codex`、`review-with-grok` |
+| Codex | `claude-review-files`、`grok-review-files` | `review-with-claude`、`review-with-grok` |
+| Grok Build | `claude-review-files`、`codex-review-files` | `review-with-claude`、`review-with-codex` |
+
+### 方法A：install.ps1でスキルをコピーする（作者が使っている方法）
+
+```powershell
+git clone https://github.com/altstack/cross-agent-review.git
+cd cross-agent-review
+pwsh -File install.ps1          # 事前に確認するなら: pwsh -File install.ps1 -WhatIf
+```
+
+インストーラーは、PCで見つかったエージェントのスキル置き場へ、各スキル（中にrunnerを同梱）をコピーします。
+
+| エージェント | スキル置き場 |
 |---|---|
-| Claude Code | `review-with-codex`、`review-with-grok` |
-| Codex | `review-with-claude`、`review-with-grok` |
-| Grok Build | `review-with-claude`、`review-with-codex` |
+| Claude Code | `~/.claude/skills` |
+| Codex | `~/.agents/skills` |
+| Grok Build | `~/.grok/skills` |
 
-### 方法A：プラグインで入れる（推奨）
+スキルのフォルダーは、これらのエージェントのスキルを読むアプリならどこでも使えます。既存のフォルダーは`-Force`を付けない限り残します。更新するときは、リポジトリを取り直して`pwsh -File install.ps1 -Force`を実行します。削除は`pwsh -File install.ps1 -Uninstall`です。インストール後は新しい会話を始めてください。
+
+### 方法B：プラグインで入れる（コマンドで導入・更新したい人向け）
+
+同じスキルをプラグインにまとめたもので、コマンド1行で入れたり更新したりできます。3つのCLIでインストールと読み込みを確認済みです。作者が毎日使っているのは方法Aです。プラグインに対応していないアプリもあります（OpenAIの資料では、CodexのVS Code拡張は非対応）。その場合は方法Aを使ってください。
 
 Claude Code：
 
@@ -71,25 +91,6 @@ grok plugin install altstack/cross-agent-review#plugins/review-with-codex
 
 入れたあとは新しい会話を始めてください。Claude Codeでは、スキルがプラグイン名付きで表示されます（例：`review-with-codex:codex-review-files`）が、普通の言葉で頼めば同じように動きます。更新は`claude plugin marketplace update`、`codex plugin marketplace upgrade`、`grok plugin update`で行えます。
 
-### 方法B：install.ps1でスキルをコピーする
-
-プラグインに対応していないアプリで使う場合や、スキルのフォルダーをそのまま置きたい場合はこちらです。方法AとBはどちらか一方だけにしてください。両方使うと、同じスキルが2つ表示されます。
-
-```powershell
-git clone https://github.com/altstack/cross-agent-review.git
-cd cross-agent-review
-pwsh -File install.ps1          # 事前に確認するなら: pwsh -File install.ps1 -WhatIf
-```
-
-インストーラーは、PCで見つかったエージェントのスキル置き場へ、各スキル（中にrunnerを同梱）をコピーします。
-
-| エージェント | スキル置き場 | 入るスキル |
-|---|---|---|
-| Claude Code | `~/.claude/skills` | `codex-review-files`、`grok-review-files` |
-| Codex | `~/.agents/skills` | `claude-review-files`、`grok-review-files` |
-| Grok Build | `~/.grok/skills` | `claude-review-files`、`codex-review-files` |
-
-既存のフォルダーは`-Force`を付けない限り残します。削除は`pwsh -File install.ps1 -Uninstall`です。インストール後は新しい会話を始めてください。
 ## 使い方
 
 あるエージェントとの会話で、ファイルとレビュー役を指定します。
