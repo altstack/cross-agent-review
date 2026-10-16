@@ -9,10 +9,10 @@ Send only the files the user named to Claude Code through the bundled runner, ke
 
 ## Runner
 
-Use the runner bundled with this skill:
+Use the runner bundled with this skill. `<skill-dir>` below means the folder that contains this SKILL.md:
 
 ```text
-<this skill's directory>\scripts\invoke-claude-review.ps1
+<skill-dir>\scripts\invoke-claude-review.ps1
 ```
 
 Requires Windows, PowerShell 7, and a signed-in Claude Code CLI (`claude`) on PATH. Do not write a replacement wrapper if the runner is missing or broken; stop and report.
@@ -21,11 +21,11 @@ Requires Windows, PowerShell 7, and a signed-in Claude Code CLI (`claude`) on PA
 
 1. Resolve only the files the user explicitly named as `FilePath`, and confirm they are readable regular files. Put local files, directories, or repositories the user named as supporting material in `ReferencePath`, and explicit URLs in `ReferenceUrl`. Do not add references because they merely look related. A diff must already exist as a file; do not create one unless the user asks.
 2. Before sending anything, tell the user which files will be sent to Claude and which local paths and URLs Claude may consult. A request that names the targets counts as permission for that scope. Ask first only if the targets, the intent to send them, or the presence of secrets is unclear.
-3. Run the runner once with `-Transport Auto`. Put multiple files in one `-FilePath` array. Add `-Language ja` when the user is writing in Japanese; otherwise leave the default English prompt.
+3. Run the runner once with `-Transport Auto`. Put multiple files in one `-FilePath` array. Add `-Language ja` when the user is writing in Japanese; otherwise leave the default English prompt. If the user names a model or effort for Claude (for example "use opus", 「Claudeのsonnetで」), pass `-Model` (an alias such as `opus`, `sonnet`, or `fable`, or a full model name) and `-Effort` (`low`, `medium`, `high`, `xhigh`, or `max`); otherwise omit them so Claude uses its configured default.
 
    ```powershell
    & 'C:\Program Files\PowerShell\7\pwsh.exe' -NoProfile -Command `
-     "& '<this skill's directory>\scripts\invoke-claude-review.ps1' -FilePath @('C:\abs\one.md','C:\abs\two.ps1') -Transport Auto"
+     "& '<skill-dir>\scripts\invoke-claude-review.ps1' -FilePath @('C:\abs\one.md','C:\abs\two.ps1') -Transport Auto"
    ```
 
    Use `-ReviewRequest` only for a short statement of the change's purpose, scope, or non-goals that the user or the project documents actually give. For a re-review the user asked for, include the round number and the previous High findings, and ask Claude to confirm those first, to report a new High only when it is tied to the latest change and a concrete failure, and to list scope expansions separately as out-of-scope suggestions.
