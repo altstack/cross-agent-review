@@ -1,7 +1,7 @@
 #requires -Version 7.0
 
 <#
-    Offline regression tests for skills/grok-review-files/scripts/invoke-grok-review.ps1.
+    Offline regression tests for plugins/review-with-grok/skills/grok-review-files/scripts/invoke-grok-review.ps1.
 
     No real Grok, model, network, or external send is used. The fake grok.exe is compiled at test
     time with the .NET Framework csc.exe that ships with Windows and placed at GROK_HOME\bin\grok.exe.
@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$runner = Join-Path $repoRoot 'skills\grok-review-files\scripts\invoke-grok-review.ps1'
+$runner = Join-Path $repoRoot 'plugins\review-with-grok\skills\grok-review-files\scripts\invoke-grok-review.ps1'
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('gkr-grok-review-' + [Guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Process -Id $PID).Path
 $passed = 0

@@ -1,0 +1,32 @@
+{
+  "name": "cross-agent-review",
+  "interface": {
+    "displayName": "Cross-agent review"
+  },
+  "plugins": [
+    {
+      "name": "review-with-claude",
+      "source": {
+        "source": "local",
+        "path": "./plugins/review-with-claude"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "review-with-grok",
+      "source": {
+        "source": "local",
+        "path": "./plugins/review-with-grok"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

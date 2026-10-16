@@ -1,7 +1,7 @@
 #requires -Version 7.0
 
 <#
-    Offline regression tests for skills/codex-review-files/scripts/invoke-codex-review.ps1.
+    Offline regression tests for plugins/review-with-codex/skills/codex-review-files/scripts/invoke-codex-review.ps1.
 
     No real Codex, model, network, or external send is used. The fake codex.exe is compiled at
     test time and placed where the runner looks for Codex (PATH, an npm install layout, or the
@@ -13,7 +13,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$runner = Join-Path $repoRoot 'skills\codex-review-files\scripts\invoke-codex-review.ps1'
+$runner = Join-Path $repoRoot 'plugins\review-with-codex\skills\codex-review-files\scripts\invoke-codex-review.ps1'
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('ccr-codex-review-' + [Guid]::NewGuid().ToString('N'))
 $pwsh = (Get-Process -Id $PID).Path
 $passed = 0
