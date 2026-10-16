@@ -351,7 +351,9 @@ try {
         $request += "`n`nReview request:`n" + $ReviewRequest.Trim()
     }
 
-    # --- Read-only tools: Read for Path or references, Glob/Grep for directories, WebFetch per host ---
+    # --- Read-only tools: Read for Path or references, Glob/Grep for directories, WebFetch per host.
+    # Inline without references embeds everything in the prompt, so Claude gets no tools at all (--tools "").
+    # --strict-mcp-config keeps the caller's MCP servers out of the reviewer in every mode. ---
     $toolNames = [Collections.Generic.List[string]]::new()
     $allowedTools = [Collections.Generic.List[string]]::new()
     if ($selectedTransport -eq 'Path' -or $references.Count -gt 0) {
@@ -385,18 +387,21 @@ try {
         $toolArguments = if ($toolNames.Count -gt 0) {
             ' --tools ' + [string]::Join(',', $toolNames) + ' --allowedTools ' + [string]::Join(',', $allowedTools)
         }
-        else { '' }
+        else { ' --tools ""' }
         $addDirectoryArguments = if ($addDirectories.Count -gt 0) {
             ' --add-dir ' + [string]::Join(' ', @($addDirectories | ForEach-Object { '"' + $_.Replace('"', '""') + '"' }))
         }
         else { '' }
-        $start.Arguments = '/d /s /c ""' + $claude.Source + '" -p --output-format stream-json --include-partial-messages --verbose' + $(if ($modelArguments.Count -gt 0) { ' ' + [string]::Join(' ', $modelArguments) } else { '' }) + $toolArguments + $addDirectoryArguments + '"'
+        $start.Arguments = '/d /s /c ""' + $claude.Source + '" -p --output-format stream-json --include-partial-messages --verbose --strict-mcp-config' + $(if ($modelArguments.Count -gt 0) { ' ' + [string]::Join(' ', $modelArguments) } else { '' }) + $toolArguments + $addDirectoryArguments + '"'
     }
     else {
         $start.FileName = $claude.Source
-        $arguments = @('-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose') + $modelArguments
+        $arguments = @('-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose', '--strict-mcp-config') + $modelArguments
         if ($toolNames.Count -gt 0) {
             $arguments += @('--tools', [string]::Join(',', $toolNames), '--allowedTools', [string]::Join(',', $allowedTools))
+        }
+        else {
+            $arguments += @('--tools', '')
         }
         if ($addDirectories.Count -gt 0) {
             $arguments += '--add-dir'

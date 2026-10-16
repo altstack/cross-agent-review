@@ -6,7 +6,7 @@ Ask another coding agent for a second opinion without leaving your chat. From Cl
 
 - **Any direction** between Claude Code, OpenAI Codex, and xAI Grok Build (six directions in total)
 - **Your existing logins.** Each CLI uses the sign-in you already have. No API keys.
-- **Read-only reviewers.** The reviewer gets only read tools (or Codex's read-only sandbox) and is told to review, not edit.
+- **Read-only reviewers.** The reviewer gets read-only tools or none at all (Codex runs in its read-only sandbox), and is told to review, not edit.
 - **Any file, not just git diffs.** Plans, specs, docs, and code you name explicitly, plus optional reference files, folders, or URLs kept separate from the review targets.
 - **Windows native.** PowerShell 7, no WSL.
 
@@ -132,7 +132,7 @@ pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-co
 - **Transport.** `Auto` embeds small text files in the prompt and switches to passing absolute paths for large or token-heavy inputs. Path mode stops before starting the reviewer if a line is over 64 KiB, because the reviewer may not be able to read it.
 - **Activity, not wall clock.** Long reviews are fine while output keeps streaming. The runner stops the process tree only after `-IdleTimeoutSeconds` of silence (exit 124).
 - **Read-only reviewers:**
-  - Claude: `claude -p` with only `Read` (plus `Glob`/`Grep` for reference folders and `WebFetch` limited to each URL's domain).
+  - Claude: `claude -p` with no tools when the files are embedded in the prompt, or only `Read` when they are passed by path (plus `Glob`/`Grep` for reference folders and `WebFetch` limited to each URL's domain). Your MCP servers are not loaded (`--strict-mcp-config`).
   - Codex: `codex exec --sandbox read-only`. Live web search is enabled only for `-ReferenceUrl`.
   - Grok: `grok --prompt-file` with only `read_file`, `grep`, and `list_dir` (plus `web_fetch` for reference URLs), `--permission-mode dontAsk`, and no subagents. Grok's `--sandbox` has no effect on Windows, so the tool allowlist is what keeps it read-only.
 - **Codex discovery:** `-CodexPath`, then the Codex CLI on PATH (an npm install is launched through its native `codex.exe`), then the CLI bundled with the Codex desktop app. Editor-extension copies are skipped.
