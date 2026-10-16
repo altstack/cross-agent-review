@@ -44,7 +44,7 @@ In the agent you chat with, set up the reviewers you want to call. No agent need
 | Codex | `claude-review-files`, `grok-review-files` | `review-with-claude`, `review-with-grok` |
 | Grok Build | `claude-review-files`, `codex-review-files` | `review-with-claude`, `review-with-codex` |
 
-### Option A: copy the skills with install.ps1 (what the author uses)
+### Option A: copy the skill folders (the author uses install.ps1)
 
 ```powershell
 git clone https://github.com/altstack/cross-agent-review.git
@@ -61,6 +61,16 @@ The installer copies each skill (with its runner inside) into the agents found o
 | Grok Build | `~/.grok/skills` |
 
 Plain skill folders work in every app that reads these agents' skills. Existing folders are kept unless you pass `-Force`; to update, pull the repository and run `pwsh -File install.ps1 -Force`. Remove everything with `pwsh -File install.ps1 -Uninstall`. Start a new chat session after installing.
+
+Or copy the same skill folders with the [skills CLI](https://github.com/vercel-labs/skills) (needs Node.js 22.20 or later). Run the line for the agent you chat in:
+
+```powershell
+npx skills add altstack/cross-agent-review -g -a claude-code -s codex-review-files -s grok-review-files   # Claude Code
+npx skills add altstack/cross-agent-review -g -a codex -s claude-review-files -s grok-review-files         # Codex
+npx skills add altstack/cross-agent-review -g -a grok -s claude-review-files -s codex-review-files         # Grok Build
+```
+
+Name one agent per line; with several agents at once, each agent also gets the skill that would call itself. Update with `npx skills update -g`. The skills CLI sends anonymous usage data to skills.sh unless the `DISABLE_TELEMETRY` environment variable is set.
 
 ### Option B: plugins (install and update with commands)
 
@@ -139,9 +149,15 @@ pwsh -File plugins\review-with-codex\skills\codex-review-files\scripts\invoke-co
 
 Exit codes: `0` success, `2` stopped before starting the reviewer, `3` empty review (Codex, Grok) or an error result (Claude), `124` idle timeout, anything else is the reviewer's own exit code.
 
+## Privacy
+
+- The runners have no telemetry and no server of their own. Nothing is sent to the author.
+- **The files you name are sent to the reviewer's vendor** (Anthropic, OpenAI, or xAI), along with any reference files, folders, or URLs you name, through that vendor's CLI signed in with your account. That vendor's terms and privacy policy apply.
+- Nothing is stored unless you pass `-SaveOutput`. The Grok runner hands the prompt to Grok in a temporary file and deletes it when the run ends. The reviewer's CLI may keep its own local session history, as it does for any use.
+
 ## What it does not do
 
-- It does not scan for secrets. **The files you name are sent to that vendor.** Do not name files that contain credentials or data you may not share. Each vendor's terms apply to your use.
+- It does not scan for secrets. Do not name files that contain credentials or data you may not share.
 - It does not block the reviewer's own global or project instructions (such as `AGENTS.md`).
 - It does not judge or merge findings, apply fixes, re-run reviews, commit, or push.
 

@@ -1,6 +1,6 @@
 {
   "name": "review-with-claude",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ask Claude Code for a one-shot, read-only review of files you name. Install it in Codex or Grok. Windows, PowerShell 7, and a signed-in Claude Code CLI are required.",
   "author": {
     "name": "altstack",
