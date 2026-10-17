@@ -179,3 +179,5 @@ pwsh -File tests\run-install-tests.ps1
 ## License
 
 [MIT](LICENSE)
+
+This project is not affiliated with or endorsed by Anthropic, OpenAI, or xAI. Claude, Codex, and Grok are trademarks of their respective owners.

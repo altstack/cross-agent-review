@@ -41,3 +41,5 @@ Start a new chat session afterwards. To copy the plain skill folder instead, use
 ## License
 
 MIT
+
+This project is not affiliated with or endorsed by Anthropic, OpenAI, or xAI. Claude, Codex, and Grok are trademarks of their respective owners.
